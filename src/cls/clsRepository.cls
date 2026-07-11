@@ -16,8 +16,8 @@ Option Explicit
 '=========================================================
 
 Private mMembers As ListObject
+Private mDues As ListObject
 Private mSettings As ListObject
-
 '---------------------------------------------------------
 ' Constructor
 '---------------------------------------------------------
@@ -27,12 +27,15 @@ Private Sub Class_Initialize()
         Set mMembers = GetTable(SHEET_MEMBERS, TBL_MEMBERS)
     End If
 
+    If TableExists(SHEET_DUES, TBL_DUES) Then
+        Set mDues = GetTable(SHEET_DUES, TBL_DUES)
+    End If
+
     If TableExists(SHEET_SETTINGS, TBL_SETTINGS) Then
         Set mSettings = GetTable(SHEET_SETTINGS, TBL_SETTINGS)
     End If
 
 End Sub
-
 '---------------------------------------------------------
 ' Destructor
 '---------------------------------------------------------
@@ -50,6 +53,14 @@ End Sub
 Public Function Members() As ListObject
 
     Set Members = mMembers
+
+End Function
+'---------------------------------------------------------
+' Dues Table
+'---------------------------------------------------------
+Public Function Dues() As ListObject
+
+    Set Dues = mDues
 
 End Function
 
@@ -81,9 +92,134 @@ Public Function MemberCount() As Long
     Next rw
 
 End Function
-
 '---------------------------------------------------------
+' Aidat Sayýsý
+'---------------------------------------------------------
+Public Function DueCount() As Long
 
+    If mDues Is Nothing Then
+        DueCount = 0
+        Exit Function
+    End If
+
+    If mDues.DataBodyRange Is Nothing Then
+        DueCount = 0
+    Else
+        DueCount = mDues.ListRows.Count
+    End If
+
+End Function
+'---------------------------------------------------------
+' Yeni Aidat Ekle
+'---------------------------------------------------------
+Public Function AddDue( _
+        ByVal MemberID As Long, _
+        ByVal Donem As String, _
+        ByVal TahakkukTarihi As Date, _
+        ByVal VadeTarihi As Date, _
+        ByVal Tutar As Double) As Long
+
+    Dim rw As ListRow
+
+    If mDues Is Nothing Then Exit Function
+
+    AddDue = GetNextID(mDues)
+    Set rw = mDues.ListRows.Add
+
+    
+
+    With rw.Range
+
+        .Cells(1, 1).Value = AddDue
+        .Cells(1, 2).Value = MemberID
+        .Cells(1, 3).Value = Donem
+        .Cells(1, 4).Value = TahakkukTarihi
+        .Cells(1, 5).Value = VadeTarihi
+        .Cells(1, 6).Value = Tutar
+        .Cells(1, 7).Value = 0
+        .Cells(1, 8).Value = Tutar
+        .Cells(1, 9).Value = "Bekliyor"
+        .Cells(1, 10).Value = ""
+        .Cells(1, 11).Value = ""
+
+    End With
+
+End Function
+'---------------------------------------------------------
+' Aidat Bul
+'---------------------------------------------------------
+Public Function FindDue(ByVal DueID As Long) As ListRow
+
+    Dim rw As ListRow
+
+    If mDues Is Nothing Then Exit Function
+
+    If mDues.DataBodyRange Is Nothing Then Exit Function
+
+    For Each rw In mDues.ListRows
+
+        If CLng(rw.Range.Cells(1, 1).Value) = DueID Then
+
+            Set FindDue = rw
+
+            Exit Function
+
+        End If
+
+    Next rw
+
+End Function
+'---------------------------------------------------------
+' Aidat Güncelle
+'---------------------------------------------------------
+Public Function UpdateDue( _
+        ByVal DueID As Long, _
+        ByVal TahakkukTarihi As Date, _
+        ByVal VadeTarihi As Date, _
+        ByVal Tutar As Double, _
+        ByVal Odenen As Double, _
+        ByVal Durum As String, _
+        Optional ByVal MakbuzNo As String = "", _
+        Optional ByVal Aciklama As String = "") As Boolean
+
+    Dim rw As ListRow
+
+    Set rw = FindDue(DueID)
+
+    If rw Is Nothing Then Exit Function
+
+    With rw.Range
+
+        .Cells(1, 4).Value = TahakkukTarihi
+        .Cells(1, 5).Value = VadeTarihi
+        .Cells(1, 6).Value = Tutar
+        .Cells(1, 7).Value = Odenen
+        .Cells(1, 8).Value = Tutar - Odenen
+        .Cells(1, 9).Value = Durum
+        .Cells(1, 10).Value = MakbuzNo
+        .Cells(1, 11).Value = Aciklama
+
+    End With
+
+    UpdateDue = True
+
+End Function
+'---------------------------------------------------------
+' Aidat Sil
+'---------------------------------------------------------
+Public Function DeleteDue(ByVal DueID As Long) As Boolean
+
+    Dim rw As ListRow
+
+    Set rw = FindDue(DueID)
+
+    If rw Is Nothing Then Exit Function
+
+    rw.Delete
+
+    DeleteDue = True
+
+End Function
 Public Function AddMember( _
         ByVal FullName As String, _
         Optional ByVal Status As String = MEMBER_ACTIVE) As Long
