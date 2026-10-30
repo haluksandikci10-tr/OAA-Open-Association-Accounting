@@ -1,0 +1,24 @@
+' Component: shMemberList
+' Source workbook document module
+
+Option Explicit
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+
+    Dim MemberID As Long
+
+    If Target.Row <= 6 Then Exit Sub
+
+    If Target.Column <> 1 Then Exit Sub
+
+    If Trim$(Target.Value) = "" Then Exit Sub
+
+    Cancel = True
+
+    MemberID = CLng(Target.Value)
+
+    frmMemberCard.LoadMember MemberID
+
+    frmMemberCard.Show
+
+End Sub
